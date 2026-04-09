@@ -1,16 +1,23 @@
 import StatsCard from "./cards/StatsCard";
+import RevenueChart from "./charts/RevenueChart";
 
 function Dashboard({ selectedStores, selectedCategories }) {
   
-  // Dummy dataset (acts like backend)
   const data = [
-    { store: "West Elm", category: "Furniture", revenue: 1200 },
-    { store: "Pottery Barn", category: "Decor", revenue: 800 },
-    { store: "Williams Sonoma", category: "Kitchen", revenue: 1500 },
-    { store: "PB Teen", category: "Outdoor", revenue: 600 },
+    { store: "West Elm", category: "Furniture", revenue: 1200, month: "Jan" },
+    { store: "Pottery Barn", category: "Decor", revenue: 800, month: "Jan" },
+    { store: "Williams Sonoma", category: "Kitchen", revenue: 1500, month: "Jan" },
+
+    { store: "West Elm", category: "Furniture", revenue: 1400, month: "Feb" },
+    { store: "Pottery Barn", category: "Decor", revenue: 900, month: "Feb" },
+    { store: "Williams Sonoma", category: "Kitchen", revenue: 1600, month: "Feb" },
+
+    { store: "West Elm", category: "Furniture", revenue: 1700, month: "Mar" },
+    { store: "Pottery Barn", category: "Decor", revenue: 950, month: "Mar" },
+    { store: "Williams Sonoma", category: "Kitchen", revenue: 1800, month: "Mar" },
   ];
 
-  // 🔥 FILTER LOGIC
+  // FILTER
   const filteredData = data.filter((item) => {
     const storeMatch =
       selectedStores.length === 0 || selectedStores.includes(item.store);
@@ -22,23 +29,39 @@ function Dashboard({ selectedStores, selectedCategories }) {
     return storeMatch && categoryMatch;
   });
 
-  // Aggregate result
+  // AGGREGATE TOTAL
   const totalRevenue = filteredData.reduce(
     (sum, item) => sum + item.revenue,
     0
   );
 
+  // 🔥 GROUP BY MONTH (IMPORTANT LOGIC)
+  const revenueByMonth = {};
+
+  filteredData.forEach((item) => {
+    if (!revenueByMonth[item.month]) {
+      revenueByMonth[item.month] = 0;
+    }
+    revenueByMonth[item.month] += item.revenue;
+  });
+
+  // Convert to array for chart
+  const chartData = Object.keys(revenueByMonth).map((month) => ({
+    month,
+    revenue: revenueByMonth[month],
+  }));
+
   return (
     <div>
-      <div className="grid grid-cols-4 gap-4">
+      {/* CARDS */}
+      <div className="grid grid-cols-2 gap-4">
         <StatsCard label="Revenue" value={`$${totalRevenue}`} />
         <StatsCard label="Records" value={filteredData.length} />
       </div>
 
-      <div className="mt-6 text-sm text-gray-600">
-        Active Filters:
-        <div>Stores: {selectedStores.join(", ") || "All"}</div>
-        <div>Categories: {selectedCategories.join(", ") || "All"}</div>
+      {/* CHART */}
+      <div className="mt-6">
+        <RevenueChart data={chartData} />
       </div>
     </div>
   );
