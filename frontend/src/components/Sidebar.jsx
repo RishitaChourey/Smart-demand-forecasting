@@ -1,6 +1,13 @@
 import { useState } from "react";
 
-function Sidebar() {
+function Sidebar({
+  selectedStores,
+  setSelectedStores,
+  selectedCategories,
+  setSelectedCategories,
+}) {
+
+  // ✅ ADD THESE (YOU FORGOT THIS)
   const stores = [
     "West Elm",
     "Pottery Barn",
@@ -14,9 +21,6 @@ function Sidebar() {
     "Decor",
     "Outdoor",
   ];
-
-  const [selectedStores, setSelectedStores] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
 
   // Toggle logic
   const handleToggle = (value, list, setList) => {

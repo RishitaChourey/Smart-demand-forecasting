@@ -65,7 +65,7 @@ function Topbar({ activePage, setActivePage }) {
           className="text-[11px] tracking-[1px]"
           style={{ color: "#B8B3AA" }}
         >
-          FY 2024 · Prophet v1.2
+          FY 2026 · Prophet/ARIMA
         </span>
       </div>
     </div>
