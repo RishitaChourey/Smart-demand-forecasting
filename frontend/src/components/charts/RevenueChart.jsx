@@ -6,6 +6,7 @@ import {
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
 
 function RevenueChart({ data }) {
@@ -25,10 +26,10 @@ function RevenueChart({ data }) {
           color: "#7A6E5A",
         }}
       >
-        Revenue Trend
+        Revenue Forecast vs Actual
       </h3>
 
-      <ResponsiveContainer width="100%" height={250}>
+      <ResponsiveContainer width="100%" height={260}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" />
 
@@ -36,12 +37,25 @@ function RevenueChart({ data }) {
           <YAxis />
 
           <Tooltip />
+          <Legend />
 
+          {/* ACTUAL */}
           <Line
             type="monotone"
-            dataKey="revenue"
+            dataKey="actual"
             stroke="#C9A84C"
             strokeWidth={3}
+            name="Actual"
+          />
+
+          {/* FORECAST */}
+          <Line
+            type="monotone"
+            dataKey="forecast"
+            stroke="#7A6E5A"
+            strokeWidth={3}
+            strokeDasharray="5 5"
+            name="Forecast"
           />
         </LineChart>
       </ResponsiveContainer>

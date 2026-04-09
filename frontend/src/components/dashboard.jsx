@@ -4,17 +4,15 @@ import RevenueChart from "./charts/RevenueChart";
 function Dashboard({ selectedStores, selectedCategories }) {
   
   const data = [
-    { store: "West Elm", category: "Furniture", revenue: 1200, month: "Jan" },
-    { store: "Pottery Barn", category: "Decor", revenue: 800, month: "Jan" },
-    { store: "Williams Sonoma", category: "Kitchen", revenue: 1500, month: "Jan" },
+    // ACTUAL DATA (past)
+    { month: "Jan", store: "West Elm", category: "Furniture", actual: 1200 },
+    { month: "Feb", store: "West Elm", category: "Furniture", actual: 1400 },
+    { month: "Mar", store: "West Elm", category: "Furniture", actual: 1700 },
 
-    { store: "West Elm", category: "Furniture", revenue: 1400, month: "Feb" },
-    { store: "Pottery Barn", category: "Decor", revenue: 900, month: "Feb" },
-    { store: "Williams Sonoma", category: "Kitchen", revenue: 1600, month: "Feb" },
-
-    { store: "West Elm", category: "Furniture", revenue: 1700, month: "Mar" },
-    { store: "Pottery Barn", category: "Decor", revenue: 950, month: "Mar" },
-    { store: "Williams Sonoma", category: "Kitchen", revenue: 1800, month: "Mar" },
+    // FORECAST DATA (future)
+    { month: "Apr", store: "West Elm", category: "Furniture", forecast: 1800 },
+    { month: "May", store: "West Elm", category: "Furniture", forecast: 2000 },
+    { month: "Jun", store: "West Elm", category: "Furniture", forecast: 2200 },
   ];
 
   // FILTER
@@ -29,34 +27,46 @@ function Dashboard({ selectedStores, selectedCategories }) {
     return storeMatch && categoryMatch;
   });
 
-  // AGGREGATE TOTAL
-  const totalRevenue = filteredData.reduce(
-    (sum, item) => sum + item.revenue,
+  // 🔥 GROUP BY MONTH (MERGE ACTUAL + FORECAST)
+  const monthlyData = {};
+
+  filteredData.forEach((item) => {
+    if (!monthlyData[item.month]) {
+      monthlyData[item.month] = {
+        month: item.month,
+        actual: 0,
+        forecast: 0,
+      };
+    }
+
+    if (item.actual) {
+      monthlyData[item.month].actual += item.actual;
+    }
+
+    if (item.forecast) {
+      monthlyData[item.month].forecast += item.forecast;
+    }
+  });
+
+  const chartData = Object.values(monthlyData);
+
+  // METRICS
+  const totalActual = chartData.reduce(
+    (sum, item) => sum + (item.actual || 0),
     0
   );
 
-  // 🔥 GROUP BY MONTH (IMPORTANT LOGIC)
-  const revenueByMonth = {};
-
-  filteredData.forEach((item) => {
-    if (!revenueByMonth[item.month]) {
-      revenueByMonth[item.month] = 0;
-    }
-    revenueByMonth[item.month] += item.revenue;
-  });
-
-  // Convert to array for chart
-  const chartData = Object.keys(revenueByMonth).map((month) => ({
-    month,
-    revenue: revenueByMonth[month],
-  }));
+  const totalForecast = chartData.reduce(
+    (sum, item) => sum + (item.forecast || 0),
+    0
+  );
 
   return (
     <div>
-      {/* CARDS */}
+      {/* KPI CARDS */}
       <div className="grid grid-cols-2 gap-4">
-        <StatsCard label="Revenue" value={`$${totalRevenue}`} />
-        <StatsCard label="Records" value={filteredData.length} />
+        <StatsCard label="Actual Revenue" value={`$${totalActual}`} />
+        <StatsCard label="Forecast Revenue" value={`$${totalForecast}`} />
       </div>
 
       {/* CHART */}
