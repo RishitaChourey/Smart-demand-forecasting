@@ -39,7 +39,13 @@ function RevenueTimeSeriesChart({ data }) {
           <XAxis dataKey="time" />
 
           {/* Revenue */}
-          <YAxis />
+          <YAxis
+            tickFormatter={(value) => {
+              if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+              if (value >= 1_000) return `${(value / 1_000).toFixed(0)}K`;
+              return value;
+            }}
+          />
 
           <Tooltip formatter={(val) => `$${val}`} />
 

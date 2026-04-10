@@ -11,6 +11,7 @@ function Dashboard({ selectedStores, selectedCategories }) {
 
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [timeSeriesData, setTimeSeriesData] = useState([]);
+  const [productStoreData, setProductStoreData] = useState([]);
 
  
   const data = [
@@ -124,26 +125,7 @@ function Dashboard({ selectedStores, selectedCategories }) {
     value: locationMap[loc],
   }));
 
-  // GROUP BY CATEGORY + LOCATION (STACKED BAR)
-  const categoryMap = {};
-
-  filteredData.forEach((item) => {
-    const category = item.category;
-    const location = item.location;
-    const value = item.actual || item.forecast || 0;
-
-    if (!categoryMap[category]) {
-      categoryMap[category] = { category };
-    }
-
-    if (!categoryMap[category][location]) {
-      categoryMap[category][location] = 0;
-    }
-
-    categoryMap[category][location] += value;
-  });
-
-  const stackedBarData = Object.values(categoryMap);
+ 
 
   // METRICS
   const totalActual = chartData.reduce(
@@ -195,7 +177,36 @@ function Dashboard({ selectedStores, selectedCategories }) {
         .join(", ")}`
     );
   }
+const transformProductStoreData = (apiData) => {
+  const result = {};
 
+  apiData.forEach(({ product_name, store_name, units_sold }) => {
+    if (!result[product_name]) {
+      result[product_name] = {
+        product: product_name
+      };
+    }
+
+    if (!result[product_name][store_name]) {
+      result[product_name][store_name] = 0;
+    }
+
+    result[product_name][store_name] += units_sold;
+  });
+
+  return Object.values(result);
+};
+const stackedBarData = transformProductStoreData(productStoreData);
+    useEffect(() => {
+        fetch("http://localhost:8000/api/product-store-sales")
+          .then((res) => res.json())
+          .then((res) => {
+            if (res.status === "success") {
+              setProductStoreData(res.data);
+            }
+          })
+          .catch((err) => console.error(err));
+      }, []);
       useEffect(() => {
     fetch("http://127.0.0.1:8000/api/monthly-revenue")
       .then((res) => res.json())

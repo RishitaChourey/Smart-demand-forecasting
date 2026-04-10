@@ -16,7 +16,7 @@ function ProductContributionChart({ data }) {
 
   // Extract locations dynamically (stack keys)
   const locations = Object.keys(data[0]).filter(
-    (key) => key !== "category"
+    (key) => key !== "product"
   );
 
   // Theme colors
@@ -52,10 +52,16 @@ function ProductContributionChart({ data }) {
           <CartesianGrid strokeDasharray="3 3" />
 
           {/* X = Product */}
-          <XAxis dataKey="category" />
+          <XAxis dataKey="product" />
 
           {/* Y = Units Sold */}
-          <YAxis />
+          <YAxis
+            tickFormatter={(value) => {
+              if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+              if (value >= 1_000) return `${(value / 1_000).toFixed(0)}K`;
+              return value;
+            }}
+          />
 
           <Tooltip />
           <Legend />
