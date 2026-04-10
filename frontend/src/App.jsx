@@ -3,6 +3,7 @@ import StatsCard from "./components/cards/StatsCard";
 import Topbar from "./components/Topbar";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./components/Dashboard";
+import PIL2 from "./pages/PIL2";
 
 function App() {
   const [activePage, setActivePage] = useState("dashboard");
@@ -33,6 +34,9 @@ function App() {
             />
           )}
 
+          {activePage === "pil2" && (
+           <PIL2 />
+          )}
         </div>
       </div>
     </div>

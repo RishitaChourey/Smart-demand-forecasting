@@ -59,6 +59,19 @@ function Topbar({ activePage, setActivePage }) {
         >
           PIL
         </span>
+         <span
+          onClick={() => setActivePage("pil2")}
+          className="text-[12px] tracking-[1.5px] cursor-pointer uppercase pb-1"
+          style={{
+            color: activePage === "pil2" ? "#C9A84C" : "#B8B3AA",
+            borderBottom:
+              activePage === "pil2"
+                ? "2px solid #C9A84C"
+                : "2px solid transparent",
+          }}
+        >
+          PIL 2
+        </span>
 
         {/* RIGHT TEXT */}
         <span
