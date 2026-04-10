@@ -1,11 +1,12 @@
 import StatsCard from "./cards/StatsCard";
 import RevenueChart from "./charts/RevenueChart";
+import InsightsPanel from "./InsightsPanel";
 
 function Dashboard({ selectedStores, selectedCategories }) {
   
   const data = [
     // ACTUAL DATA (past)
-    { month: "Jan", store: "West Elm", category: "Furniture", actual: 1200 },
+    { month: "Jan", store: "West Elm", category: "Furniture", actual: 1210 },
     { month: "Feb", store: "West Elm", category: "Furniture", actual: 1400 },
     { month: "Mar", store: "West Elm", category: "Furniture", actual: 1700 },
 
@@ -49,6 +50,8 @@ function Dashboard({ selectedStores, selectedCategories }) {
   });
 
   const chartData = Object.values(monthlyData);
+  console.log(chartData);
+  
 
   // METRICS
   const totalActual = chartData.reduce(
@@ -60,6 +63,46 @@ function Dashboard({ selectedStores, selectedCategories }) {
     (sum, item) => sum + (item.forecast || 0),
     0
   );
+  const values = chartData.map(
+    (d) => (d.actual !== 0 ? d.actual : d.forecast)
+  );
+
+  const mean =
+    values.reduce((sum, v) => sum + v, 0) / values.length;
+
+  const variance =
+    values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) /
+    values.length;
+
+  const stdDev = Math.sqrt(variance);
+  const anomalies = chartData.filter((d) => {
+  const value = d.actual !== 0 ? d.actual : d.forecast;
+    return Math.abs(value - mean) > 1.2 * stdDev;
+  });
+  const insights = [];
+
+  // Trend Insight
+  if (totalForecast > totalActual) {
+    insights.push("Revenue is expected to increase in upcoming months.");
+  } else {
+    insights.push("Revenue may decline based on forecast trends.");
+  }
+
+  // Category Insight
+  if (selectedCategories.length === 1) {
+    insights.push(
+      `Category "${selectedCategories[0]}" is currently selected.`
+    );
+  }
+
+  // Anomaly Insight
+  if (anomalies.length > 0) {
+    insights.push(
+      `Detected unusual activity in ${anomalies
+        .map((a) => a.month)
+        .join(", ")}`
+    );
+  }
 
   return (
     <div>
@@ -72,6 +115,7 @@ function Dashboard({ selectedStores, selectedCategories }) {
       {/* CHART */}
       <div className="mt-6">
         <RevenueChart data={chartData} />
+         <InsightsPanel insights={insights} anomalies={anomalies} />
       </div>
     </div>
   );
