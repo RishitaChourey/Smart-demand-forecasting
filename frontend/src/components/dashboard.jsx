@@ -1,20 +1,29 @@
 import StatsCard from "./cards/StatsCard";
 import RevenueChart from "./charts/RevenueChart";
 import InsightsPanel from "./InsightsPanel";
+import MonthlyTrendChart from "./charts/MonthlyTrendChart";
+import StoreShareChart from "./charts/StoreShareChart";
 
 function Dashboard({ selectedStores, selectedCategories }) {
   
-  const data = [
-    // ACTUAL DATA (past)
-    { month: "Jan", store: "West Elm", category: "Furniture", actual: 1210 },
-    { month: "Feb", store: "West Elm", category: "Furniture", actual: 1400 },
-    { month: "Mar", store: "West Elm", category: "Furniture", actual: 1700 },
+const data = [
+  { month: "Jan", store: "West Elm", location: "California", category: "Furniture", actual: 500 },
+  { month: "Jan", store: "West Elm", location: "New York", category: "Furniture", actual: 400 },
+  { month: "Jan", store: "West Elm", location: "Texas", category: "Furniture", actual: 310 },
 
-    // FORECAST DATA (future)
-    { month: "Apr", store: "West Elm", category: "Furniture", forecast: 1800 },
-    { month: "May", store: "West Elm", category: "Furniture", forecast: 2000 },
-    { month: "Jun", store: "West Elm", category: "Furniture", forecast: 2200 },
-  ];
+  { month: "Feb", store: "West Elm", location: "California", category: "Furniture", actual: 600 },
+  { month: "Feb", store: "West Elm", location: "New York", category: "Furniture", actual: 500 },
+  { month: "Feb", store: "West Elm", location: "Texas", category: "Furniture", actual: 300 },
+
+  { month: "Mar", store: "West Elm", location: "California", category: "Furniture", actual: 700 },
+  { month: "Mar", store: "West Elm", location: "New York", category: "Furniture", actual: 600 },
+  { month: "Mar", store: "West Elm", location: "Texas", category: "Furniture", actual: 400 },
+
+  // Forecast
+  { month: "Apr", store: "West Elm", location: "California", category: "Furniture", forecast: 800 },
+  { month: "Apr", store: "West Elm", location: "New York", category: "Furniture", forecast: 600 },
+  { month: "Apr", store: "West Elm", location: "Texas", category: "Furniture", forecast: 400 },
+];
 
   // FILTER
   const filteredData = data.filter((item) => {
@@ -48,7 +57,24 @@ function Dashboard({ selectedStores, selectedCategories }) {
       monthlyData[item.month].forecast += item.forecast;
     }
   });
+// GROUP BY LOCATION (for donut chart)
+  const locationMap = {};
 
+  filteredData.forEach((item) => {
+    const key = item.location;
+
+    if (!locationMap[key]) {
+      locationMap[key] = 0;
+    }
+
+    const value = item.actual || item.forecast || 0;
+    locationMap[key] += value;
+  });
+
+  const locationData = Object.keys(locationMap).map((loc) => ({
+    name: loc,
+    value: locationMap[loc],
+  }));
   const chartData = Object.values(monthlyData);
   console.log(chartData);
   
@@ -117,7 +143,13 @@ function Dashboard({ selectedStores, selectedCategories }) {
         <RevenueChart data={chartData} />
          <InsightsPanel insights={insights} anomalies={anomalies} />
       </div>
+      
+      <div className="mt-6 grid grid-cols-2 gap-4">
+        <MonthlyTrendChart />
+       <StoreShareChart data={locationData} />
+      </div>
     </div>
+
   );
 }
 
