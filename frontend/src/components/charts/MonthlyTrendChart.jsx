@@ -8,23 +8,11 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-function MonthlyTrendChart() {
-  // DUMMY DATA (12 months)
-  const data = [
-    { month: "Jan", sales: 1200 },
-    { month: "Feb", sales: 1400 },
-    { month: "Mar", sales: 1700 },
-    { month: "Apr", sales: 1600 },
-    { month: "May", sales: 1800 },
-    { month: "Jun", sales: 2000 },
-    { month: "Jul", sales: 2200 },
-    { month: "Aug", sales: 2100 },
-    { month: "Sep", sales: 2300 },
-    { month: "Oct", sales: 2500 },
-    { month: "Nov", sales: 2700 },
-    { month: "Dec", sales: 3000 },
-  ];
-
+function MonthlyTrendChart({data}) {
+const trendData = data.map((item) => ({
+  month: item.month,
+  sales: item.actual !== 0 ? item.actual : item.forecast,
+}));
   return (
     <div
       style={{
@@ -45,7 +33,7 @@ function MonthlyTrendChart() {
       </h3>
 
       <ResponsiveContainer width="100%" height={250}>
-        <LineChart data={data}>
+        <LineChart data={trendData}>
           <CartesianGrid strokeDasharray="3 3" />
 
           <XAxis dataKey="month" />

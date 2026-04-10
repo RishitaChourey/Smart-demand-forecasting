@@ -7,7 +7,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-function StoreShareChart({ data }) {
+function StoreShareChart({ data, onSegmentClick, selectedLocation }) {
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
@@ -34,7 +34,7 @@ function StoreShareChart({ data }) {
           color: "#7A6E5A",
         }}
       >
-        Revenue Share by store Location
+        Revenue Share by Store Location
       </h3>
 
       <ResponsiveContainer width="100%" height={250}>
@@ -43,13 +43,26 @@ function StoreShareChart({ data }) {
             data={dataWithPercent}
             dataKey="value"
             nameKey="name"
-            innerRadius={40}
-            outerRadius={60}
+            innerRadius={50}
+            outerRadius={80}
             paddingAngle={3}
             label={({ percent }) => `${percent}%`}
+            onClick={(entry) => {
+              onSegmentClick((prev) =>
+                prev === entry.name ? null : entry.name
+              );
+            }}
           >
             {dataWithPercent.map((entry, index) => (
-              <Cell key={index} fill={COLORS[index % COLORS.length]} />
+              <Cell
+                key={index}
+                fill={COLORS[index % COLORS.length]}
+                opacity={
+                  !selectedLocation || selectedLocation === entry.name
+                    ? 1
+                    : 0.4
+                }
+              />
             ))}
           </Pie>
 
@@ -59,6 +72,7 @@ function StoreShareChart({ data }) {
               name,
             ]}
           />
+
           <Legend />
         </PieChart>
       </ResponsiveContainer>

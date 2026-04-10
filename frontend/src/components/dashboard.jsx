@@ -1,3 +1,4 @@
+import { useState } from "react";
 import StatsCard from "./cards/StatsCard";
 import RevenueChart from "./charts/RevenueChart";
 import InsightsPanel from "./InsightsPanel";
@@ -5,25 +6,27 @@ import MonthlyTrendChart from "./charts/MonthlyTrendChart";
 import StoreShareChart from "./charts/StoreShareChart";
 
 function Dashboard({ selectedStores, selectedCategories }) {
-  
-const data = [
-  { month: "Jan", store: "West Elm", location: "California", category: "Furniture", actual: 500 },
-  { month: "Jan", store: "West Elm", location: "New York", category: "Furniture", actual: 400 },
-  { month: "Jan", store: "West Elm", location: "Texas", category: "Furniture", actual: 310 },
 
-  { month: "Feb", store: "West Elm", location: "California", category: "Furniture", actual: 600 },
-  { month: "Feb", store: "West Elm", location: "New York", category: "Furniture", actual: 500 },
-  { month: "Feb", store: "West Elm", location: "Texas", category: "Furniture", actual: 300 },
+  const [selectedLocation, setSelectedLocation] = useState(null);
 
-  { month: "Mar", store: "West Elm", location: "California", category: "Furniture", actual: 700 },
-  { month: "Mar", store: "West Elm", location: "New York", category: "Furniture", actual: 600 },
-  { month: "Mar", store: "West Elm", location: "Texas", category: "Furniture", actual: 400 },
+  const data = [
+    { month: "Jan", store: "West Elm", location: "California", category: "Furniture", actual: 500 },
+    { month: "Jan", store: "West Elm", location: "New York", category: "Furniture", actual: 400 },
+    { month: "Jan", store: "West Elm", location: "Texas", category: "Furniture", actual: 310 },
 
-  // Forecast
-  { month: "Apr", store: "West Elm", location: "California", category: "Furniture", forecast: 800 },
-  { month: "Apr", store: "West Elm", location: "New York", category: "Furniture", forecast: 600 },
-  { month: "Apr", store: "West Elm", location: "Texas", category: "Furniture", forecast: 400 },
-];
+    { month: "Feb", store: "West Elm", location: "California", category: "Furniture", actual: 600 },
+    { month: "Feb", store: "West Elm", location: "New York", category: "Furniture", actual: 500 },
+    { month: "Feb", store: "West Elm", location: "Texas", category: "Furniture", actual: 300 },
+
+    { month: "Mar", store: "West Elm", location: "California", category: "Furniture", actual: 700 },
+    { month: "Mar", store: "West Elm", location: "New York", category: "Furniture", actual: 600 },
+    { month: "Mar", store: "West Elm", location: "Texas", category: "Furniture", actual: 400 },
+
+    // Forecast
+    { month: "Apr", store: "West Elm", location: "California", category: "Furniture", forecast: 800 },
+    { month: "Apr", store: "West Elm", location: "New York", category: "Furniture", forecast: 600 },
+    { month: "Apr", store: "West Elm", location: "Texas", category: "Furniture", forecast: 400 },
+  ];
 
   // FILTER
   const filteredData = data.filter((item) => {
@@ -34,10 +37,13 @@ const data = [
       selectedCategories.length === 0 ||
       selectedCategories.includes(item.category);
 
-    return storeMatch && categoryMatch;
+    const locationMatch =
+      !selectedLocation || item.location === selectedLocation;
+
+    return storeMatch && categoryMatch && locationMatch;
   });
 
-  // 🔥 GROUP BY MONTH (MERGE ACTUAL + FORECAST)
+  // GROUP BY MONTH (MERGE ACTUAL + FORECAST)
   const monthlyData = {};
 
   filteredData.forEach((item) => {
@@ -57,7 +63,10 @@ const data = [
       monthlyData[item.month].forecast += item.forecast;
     }
   });
-// GROUP BY LOCATION (for donut chart)
+
+  const chartData = Object.values(monthlyData);
+
+  // GROUP BY LOCATION (for donut chart)
   const locationMap = {};
 
   filteredData.forEach((item) => {
@@ -75,8 +84,7 @@ const data = [
     name: loc,
     value: locationMap[loc],
   }));
-  const chartData = Object.values(monthlyData);
-  console.log(chartData);
+
   
 
   // METRICS
@@ -102,26 +110,26 @@ const data = [
 
   const stdDev = Math.sqrt(variance);
   const anomalies = chartData.filter((d) => {
-  const value = d.actual !== 0 ? d.actual : d.forecast;
+    const value = d.actual !== 0 ? d.actual : d.forecast;
     return Math.abs(value - mean) > 1.2 * stdDev;
   });
   const insights = [];
 
-  // Trend Insight
+    // Trend Insight
   if (totalForecast > totalActual) {
     insights.push("Revenue is expected to increase in upcoming months.");
   } else {
     insights.push("Revenue may decline based on forecast trends.");
   }
 
-  // Category Insight
+    // Category Insight
   if (selectedCategories.length === 1) {
     insights.push(
       `Category "${selectedCategories[0]}" is currently selected.`
     );
   }
 
-  // Anomaly Insight
+    // Anomaly Insight
   if (anomalies.length > 0) {
     insights.push(
       `Detected unusual activity in ${anomalies
@@ -139,17 +147,47 @@ const data = [
       </div>
 
       {/* CHART */}
-      <div className="mt-6">
-        <RevenueChart data={chartData} />
-         <InsightsPanel insights={insights} anomalies={anomalies} />
-      </div>
       
+
+      {/* FILTER INDICATOR + CLEAR BUTTON */}
+      {selectedLocation && (
+        <div
+          style={{
+            marginTop: "10px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "6px 10px",
+            background: "#F3EFE7",
+            borderRadius: "20px",
+            fontSize: "12px",
+          }}
+        >
+          Location: <b>{selectedLocation}</b>
+          <span
+            onClick={() => setSelectedLocation(null)}
+            style={{
+              cursor: "pointer",
+              fontWeight: "bold",
+            }}
+          >
+            x
+          </span>
+        </div>
+      )}
+
+
+      {/* LOWER SECTION */}
       <div className="mt-6 grid grid-cols-2 gap-4">
-        <MonthlyTrendChart />
-       <StoreShareChart data={locationData} />
+          <RevenueChart data={chartData} />
+          <InsightsPanel insights={insights} anomalies={anomalies} />
+        <StoreShareChart
+          data={locationData}
+          onSegmentClick={setSelectedLocation}
+          selectedLocation={selectedLocation}
+        />
       </div>
     </div>
-
   );
 }
 
