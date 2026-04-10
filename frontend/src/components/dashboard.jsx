@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import StatsCard from "./cards/StatsCard";
 import RevenueChart from "./charts/RevenueChart";
 import InsightsPanel from "./InsightsPanel";
@@ -10,46 +10,9 @@ import RevenueTimeSeriesChart from "./charts/RevenueTimeSeriesChart";
 function Dashboard({ selectedStores, selectedCategories }) {
 
   const [selectedLocation, setSelectedLocation] = useState(null);
-  const timeSeriesData = [
-  { month: "Jan", year: 2022, revenue: 4200 },
-  { month: "Feb", year: 2022, revenue: 4600 },
-  { month: "Mar", year: 2022, revenue: 5000 },
-  { month: "Apr", year: 2022, revenue: 5200 },
-  { month: "May", year: 2022, revenue: 5800 },
-  { month: "Jun", year: 2022, revenue: 6100 },
-  { month: "Jul", year: 2022, revenue: 5900 },
-  { month: "Aug", year: 2022, revenue: 6200 },
-  { month: "Sep", year: 2022, revenue: 6400 },
-  { month: "Oct", year: 2022, revenue: 7000 },
-  { month: "Nov", year: 2022, revenue: 7600 },
-  { month: "Dec", year: 2022, revenue: 8200 },
+  const [timeSeriesData, setTimeSeriesData] = useState([]);
 
-  { month: "Jan", year: 2023, revenue: 5000 },
-  { month: "Feb", year: 2023, revenue: 5400 },
-  { month: "Mar", year: 2023, revenue: 6000 },
-  { month: "Apr", year: 2023, revenue: 6400 },
-  { month: "May", year: 2023, revenue: 7000 },
-  { month: "Jun", year: 2023, revenue: 7600 },
-  { month: "Jul", year: 2023, revenue: 7200 },
-  { month: "Aug", year: 2023, revenue: 7800 },
-  { month: "Sep", year: 2023, revenue: 8200 },
-  { month: "Oct", year: 2023, revenue: 9000 },
-  { month: "Nov", year: 2023, revenue: 9800 },
-  { month: "Dec", year: 2023, revenue: 11000 },
-
-  { month: "Jan", year: 2024, revenue: 6500 },
-  { month: "Feb", year: 2024, revenue: 7000 },
-  { month: "Mar", year: 2024, revenue: 7800 },
-  { month: "Apr", year: 2024, revenue: 8200 },
-  { month: "May", year: 2024, revenue: 9000 },
-  { month: "Jun", year: 2024, revenue: 9600 },
-  { month: "Jul", year: 2024, revenue: 9100 },
-  { month: "Aug", year: 2024, revenue: 9900 },
-  { month: "Sep", year: 2024, revenue: 10500 },
-  { month: "Oct", year: 2024, revenue: 11500 },
-  { month: "Nov", year: 2024, revenue: 12500 },
-  { month: "Dec", year: 2024, revenue: 14000 },
-];
+ 
   const data = [
   // JAN → MAR (ACTUAL DATA)
   { month: "Jan", store: "West Elm", location: "California", category: "Furniture", actual: 520 },
@@ -233,10 +196,30 @@ function Dashboard({ selectedStores, selectedCategories }) {
     );
   }
 
-  const formattedData = timeSeriesData.map((item) => ({
-    time: `${item.month} ${item.year}`,
-    revenue: item.revenue,
-  }));
+      useEffect(() => {
+    fetch("http://127.0.0.1:8000/api/monthly-revenue")
+      .then((res) => res.json())
+      .then((res) => {
+        // IMPORTANT: backend wraps data inside "data"
+        const apiData = res.data;
+
+        // Transform for chart
+        const formatted = apiData.map((item) => {
+          const [year, month] = item.month_year.split("-");
+
+          return {
+            time: new Date(year, month - 1).toLocaleString("default", {
+              month: "short",
+              year: "numeric",
+            }),
+            revenue: item.revenue,
+          };
+        });
+
+            setTimeSeriesData(formatted);
+          })
+          .catch((err) => console.error("API ERROR:", err));
+      }, []);
 
   return (
     <div>
@@ -287,7 +270,7 @@ function Dashboard({ selectedStores, selectedCategories }) {
         
       </div>
       <div className="mt-6">
-        <RevenueTimeSeriesChart data={formattedData} />
+        <RevenueTimeSeriesChart data={timeSeriesData} />
       </div>
 
     </div>
