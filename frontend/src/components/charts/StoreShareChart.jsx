@@ -37,7 +37,7 @@ function StoreShareChart({ data, onSegmentClick, selectedLocation }) {
         Revenue Share by Store Location
       </h3>
 
-      <ResponsiveContainer width="100%" height={250}>
+      <ResponsiveContainer width="100%" height={320}>
         <PieChart>
           <Pie
             data={dataWithPercent}

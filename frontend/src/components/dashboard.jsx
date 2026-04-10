@@ -6,14 +6,60 @@ import MonthlyTrendChart from "./charts/MonthlyTrendChart";
 import StoreShareChart from "./charts/StoreShareChart";
 import ProductContributionChart from "./charts/ProductContributionChart";
 import RevenueTimeSeriesChart from "./charts/RevenueTimeSeriesChart";
+import StarProduct from "./StarProduct";
 
 function Dashboard({ selectedStores, selectedCategories }) {
 
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [timeSeriesData, setTimeSeriesData] = useState([]);
+  const [storeData, setStoreData] = useState([]);
   const [productStoreData, setProductStoreData] = useState([]);
-
  
+  
+
+ const productMeta = {
+  "Baking Sheet": {
+    image: "/products/baking-sheet.png",
+    link: "https://www.westelm.com/products/baking-sheet",
+  },
+  "BBQ Tools": {
+    image: "/products/bbq-tools.png",
+    link: "https://www.westelm.com/products/bbq-tools",
+  },
+  "Blender": {
+    image: "/products/blender.png",
+    link: "https://www.westelm.com/products/blender",
+  },
+  "Cake Pan": {
+    image: "/products/cake-pan.png",
+    link: "https://www.westelm.com/products/cake-pan",
+  },
+  "Cast Iron Skillet": {
+    image: "/products/cast-iron-skillet.png",
+    link: "https://www.westelm.com/products/cast-iron-skillet",
+  },
+  "Chef Knife": {
+    image: "/products/chef-knife.png",
+    link: "https://www.westelm.com/products/chef-knife",
+  },
+  "Cutting Board": {
+    image: "/products/cutting-board.png",
+    link: "https://www.westelm.com/products/cutting-board",
+  },
+  "Stainless Steel Pan": {
+    image: "/products/stainless-steel-pan.png",
+    link: "https://www.westelm.com/products/stainless-steel-pan",
+  },
+  "Stand Mixer": {
+    image: "/products/stand-mixer.png",
+    link: "https://www.westelm.com/products/stand-mixer",
+  },
+  "Turkey Roaster": {
+    image: "/products/turkey-roaster.png",
+    link: "https://www.westelm.com/products/turkey-roaster",
+  },
+};
+
   const data = [
   // JAN → MAR (ACTUAL DATA)
   { month: "Jan", store: "West Elm", location: "California", category: "Furniture", actual: 520 },
@@ -67,7 +113,25 @@ function Dashboard({ selectedStores, selectedCategories }) {
   { month: "Jul", store: "IKEA", location: "Texas", category: "Furniture", forecast: 300 }, // dip
   { month: "Nov", store: "West Elm", location: "New York", category: "Furniture", forecast: 1400 }, // spike
 ];
+const productMap = {};
 
+productStoreData.forEach((item) => {
+  if (!productMap[item.product_name]) {
+    productMap[item.product_name] = 0;
+  }
+
+  productMap[item.product_name] += item.units_sold;
+});
+let starProduct = null;
+let maxUnits = 0;
+
+Object.keys(productMap).forEach((product) => {
+  if (productMap[product] > maxUnits) {
+    maxUnits = productMap[product];
+    starProduct = product;
+  }
+});
+const starMeta = productMeta[starProduct]; 
   // FILTER
   const filteredData = data.filter((item) => {
     const storeMatch =
@@ -105,27 +169,6 @@ function Dashboard({ selectedStores, selectedCategories }) {
   });
 
   const chartData = Object.values(monthlyData);
-
-  // GROUP BY LOCATION (for donut chart)
-  const locationMap = {};
-
-  filteredData.forEach((item) => {
-    const key = item.location;
-
-    if (!locationMap[key]) {
-      locationMap[key] = 0;
-    }
-
-    const value = item.actual || item.forecast || 0;
-    locationMap[key] += value;
-  });
-
-  const locationData = Object.keys(locationMap).map((loc) => ({
-    name: loc,
-    value: locationMap[loc],
-  }));
-
- 
 
   // METRICS
   const totalActual = chartData.reduce(
@@ -177,6 +220,26 @@ function Dashboard({ selectedStores, selectedCategories }) {
         .join(", ")}`
     );
   }
+//star product
+
+const starProductStores = productStoreData.filter(
+  (item) => item.product_name === starProduct
+);
+
+  useEffect(() => {
+  fetch("http://127.0.0.1:8000/api/store-sales")
+    .then((res) => res.json())
+    .then((res) => {
+      const transformed = res.data.map((item) => ({
+        name: item.store_name,
+        value: item.total_units_sold,
+      }));
+
+      setStoreData(transformed);
+    })
+    .catch((err) => console.error("Store API error:", err));
+}, []);
+
 const transformProductStoreData = (apiData) => {
   const result = {};
 
@@ -273,11 +336,18 @@ const stackedBarData = transformProductStoreData(productStoreData);
       <div className="mt-6 grid grid-cols-2 gap-4">
           <RevenueChart data={chartData} />
           <StoreShareChart
-            data={locationData}
+            data={storeData}
             onSegmentClick={setSelectedLocation}
             selectedLocation={selectedLocation}
           />
+          
           <InsightsPanel insights={insights} anomalies={anomalies} />
+           <StarProduct
+              product={starProduct}
+              units={maxUnits}
+              meta={starMeta}
+              storeBreakdown={starProductStores}
+            />
         
       </div>
       <div className="mt-6">
