@@ -2,34 +2,31 @@ import { useState } from "react";
 import StatsCard from "./cards/StatsCard";
 import RevenueChart from "./charts/RevenueChart";
 import InsightsPanel from "./InsightsPanel";
-import MonthlyTrendChart from "./charts/MonthlyTrendChart";
+// import MonthlyTrendChart from "./charts/MonthlyTrendChart";
 import StoreShareChart from "./charts/StoreShareChart";
+import useSalesData from "../../../backend/api/useSalesData";
 
 function Dashboard({ selectedStores, selectedCategories }) {
 
   const [selectedLocation, setSelectedLocation] = useState(null);
 
-  const data = [
-    { month: "Jan", store: "West Elm", location: "California", category: "Furniture", actual: 500 },
-    { month: "Jan", store: "West Elm", location: "New York", category: "Furniture", actual: 400 },
-    { month: "Jan", store: "West Elm", location: "Texas", category: "Furniture", actual: 310 },
+  const { data = [], loading, error } = useSalesData();
+  if (loading) return <p>Loading dashboard...</p>;
+  if (error) return <p>Error loading data</p>;
+  if (!data.length) return <p>No data available</p>;
 
-    { month: "Feb", store: "West Elm", location: "California", category: "Furniture", actual: 600 },
-    { month: "Feb", store: "West Elm", location: "New York", category: "Furniture", actual: 500 },
-    { month: "Feb", store: "West Elm", location: "Texas", category: "Furniture", actual: 300 },
+  const normalizedData = data.map((item, index, arr) => {
+    const prev = arr[index - 1];
 
-    { month: "Mar", store: "West Elm", location: "California", category: "Furniture", actual: 700 },
-    { month: "Mar", store: "West Elm", location: "New York", category: "Furniture", actual: 600 },
-    { month: "Mar", store: "West Elm", location: "Texas", category: "Furniture", actual: 400 },
-
-    // Forecast
-    { month: "Apr", store: "West Elm", location: "California", category: "Furniture", forecast: 800 },
-    { month: "Apr", store: "West Elm", location: "New York", category: "Furniture", forecast: 600 },
-    { month: "Apr", store: "West Elm", location: "Texas", category: "Furniture", forecast: 400 },
-  ];
+    return {
+      ...item,
+      actual: Number(item.actual) || 0,
+      forecast: prev ? Number(prev.actual) || 0 : Number(item.actual) || 0,
+    };
+  });
 
   // FILTER
-  const filteredData = data.filter((item) => {
+  const filteredData = normalizedData.filter((item) => {
     const storeMatch =
       selectedStores.length === 0 || selectedStores.includes(item.store);
 
