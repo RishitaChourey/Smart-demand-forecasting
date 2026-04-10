@@ -4,29 +4,65 @@ import RevenueChart from "./charts/RevenueChart";
 import InsightsPanel from "./InsightsPanel";
 import MonthlyTrendChart from "./charts/MonthlyTrendChart";
 import StoreShareChart from "./charts/StoreShareChart";
+import ProductContributionChart from "./charts/ProductContributionChart";
 
 function Dashboard({ selectedStores, selectedCategories }) {
 
   const [selectedLocation, setSelectedLocation] = useState(null);
 
   const data = [
-    { month: "Jan", store: "West Elm", location: "California", category: "Furniture", actual: 500 },
-    { month: "Jan", store: "West Elm", location: "New York", category: "Furniture", actual: 400 },
-    { month: "Jan", store: "West Elm", location: "Texas", category: "Furniture", actual: 310 },
+  // JAN → MAR (ACTUAL DATA)
+  { month: "Jan", store: "West Elm", location: "California", category: "Furniture", actual: 520 },
+  { month: "Jan", store: "West Elm", location: "New York", category: "Furniture", actual: 430 },
+  { month: "Jan", store: "West Elm", location: "Texas", category: "Furniture", actual: 300 },
+  { month: "Jan", store: "IKEA", location: "California", category: "Furniture", actual: 650 },
+  { month: "Jan", store: "IKEA", location: "New York", category: "Furniture", actual: 500 },
+  { month: "Jan", store: "IKEA", location: "Texas", category: "Furniture", actual: 420 },
 
-    { month: "Feb", store: "West Elm", location: "California", category: "Furniture", actual: 600 },
-    { month: "Feb", store: "West Elm", location: "New York", category: "Furniture", actual: 500 },
-    { month: "Feb", store: "West Elm", location: "Texas", category: "Furniture", actual: 300 },
+  { month: "Feb", store: "West Elm", location: "California", category: "Furniture", actual: 600 },
+  { month: "Feb", store: "West Elm", location: "New York", category: "Furniture", actual: 520 },
+  { month: "Feb", store: "West Elm", location: "Texas", category: "Furniture", actual: 320 },
+  { month: "Feb", store: "IKEA", location: "California", category: "Furniture", actual: 700 },
+  { month: "Feb", store: "IKEA", location: "New York", category: "Furniture", actual: 580 },
+  { month: "Feb", store: "IKEA", location: "Texas", category: "Furniture", actual: 450 },
 
-    { month: "Mar", store: "West Elm", location: "California", category: "Furniture", actual: 700 },
-    { month: "Mar", store: "West Elm", location: "New York", category: "Furniture", actual: 600 },
-    { month: "Mar", store: "West Elm", location: "Texas", category: "Furniture", actual: 400 },
+  { month: "Mar", store: "West Elm", location: "California", category: "Furniture", actual: 720 },
+  { month: "Mar", store: "West Elm", location: "New York", category: "Furniture", actual: 610 },
+  { month: "Mar", store: "West Elm", location: "Texas", category: "Furniture", actual: 410 },
+  { month: "Mar", store: "IKEA", location: "California", category: "Furniture", actual: 780 },
+  { month: "Mar", store: "IKEA", location: "New York", category: "Furniture", actual: 640 },
+  { month: "Mar", store: "IKEA", location: "Texas", category: "Furniture", actual: 500 },
 
-    // Forecast
-    { month: "Apr", store: "West Elm", location: "California", category: "Furniture", forecast: 800 },
-    { month: "Apr", store: "West Elm", location: "New York", category: "Furniture", forecast: 600 },
-    { month: "Apr", store: "West Elm", location: "Texas", category: "Furniture", forecast: 400 },
-  ];
+  // ADD CATEGORY VARIATION
+  { month: "Jan", store: "West Elm", location: "California", category: "Decor", actual: 300 },
+  { month: "Feb", store: "West Elm", location: "California", category: "Decor", actual: 350 },
+  { month: "Mar", store: "West Elm", location: "California", category: "Decor", actual: 400 },
+
+  { month: "Jan", store: "IKEA", location: "New York", category: "Lighting", actual: 200 },
+  { month: "Feb", store: "IKEA", location: "New York", category: "Lighting", actual: 260 },
+  { month: "Mar", store: "IKEA", location: "New York", category: "Lighting", actual: 300 },
+
+  // APR → DEC (FORECAST DATA)
+  { month: "Apr", store: "West Elm", location: "California", category: "Furniture", forecast: 800 },
+  { month: "Apr", store: "West Elm", location: "New York", category: "Furniture", forecast: 620 },
+  { month: "Apr", store: "West Elm", location: "Texas", category: "Furniture", forecast: 420 },
+  { month: "Apr", store: "IKEA", location: "California", category: "Furniture", forecast: 850 },
+  { month: "Apr", store: "IKEA", location: "New York", category: "Furniture", forecast: 700 },
+  { month: "Apr", store: "IKEA", location: "Texas", category: "Furniture", forecast: 520 },
+
+  { month: "May", store: "West Elm", location: "California", category: "Furniture", forecast: 850 },
+  { month: "Jun", store: "West Elm", location: "California", category: "Furniture", forecast: 900 },
+  { month: "Jul", store: "West Elm", location: "California", category: "Furniture", forecast: 950 },
+  { month: "Aug", store: "West Elm", location: "California", category: "Furniture", forecast: 920 },
+  { month: "Sep", store: "West Elm", location: "California", category: "Furniture", forecast: 980 },
+  { month: "Oct", store: "West Elm", location: "California", category: "Furniture", forecast: 1050 },
+  { month: "Nov", store: "West Elm", location: "California", category: "Furniture", forecast: 1150 },
+  { month: "Dec", store: "West Elm", location: "California", category: "Furniture", forecast: 1300 },
+
+  // Add variability for realism
+  { month: "Jul", store: "IKEA", location: "Texas", category: "Furniture", forecast: 300 }, // dip
+  { month: "Nov", store: "West Elm", location: "New York", category: "Furniture", forecast: 1400 }, // spike
+];
 
   // FILTER
   const filteredData = data.filter((item) => {
@@ -85,7 +121,26 @@ function Dashboard({ selectedStores, selectedCategories }) {
     value: locationMap[loc],
   }));
 
-  
+  // GROUP BY CATEGORY + LOCATION (STACKED BAR)
+  const categoryMap = {};
+
+  filteredData.forEach((item) => {
+    const category = item.category;
+    const location = item.location;
+    const value = item.actual || item.forecast || 0;
+
+    if (!categoryMap[category]) {
+      categoryMap[category] = { category };
+    }
+
+    if (!categoryMap[category][location]) {
+      categoryMap[category][location] = 0;
+    }
+
+    categoryMap[category][location] += value;
+  });
+
+  const stackedBarData = Object.values(categoryMap);
 
   // METRICS
   const totalActual = chartData.reduce(
@@ -141,14 +196,14 @@ function Dashboard({ selectedStores, selectedCategories }) {
   return (
     <div>
       {/* KPI CARDS */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="mt-6 grid grid-cols-2 gap-4">
         <StatsCard label="Actual Revenue" value={`$${totalActual}`} />
         <StatsCard label="Forecast Revenue" value={`$${totalForecast}`} />
       </div>
-
-      {/* CHART */}
+      <div className="mt-6">
+        <ProductContributionChart data={stackedBarData} />
+      </div>
       
-
       {/* FILTER INDICATOR + CLEAR BUTTON */}
       {selectedLocation && (
         <div
@@ -180,12 +235,13 @@ function Dashboard({ selectedStores, selectedCategories }) {
       {/* LOWER SECTION */}
       <div className="mt-6 grid grid-cols-2 gap-4">
           <RevenueChart data={chartData} />
+          <StoreShareChart
+            data={locationData}
+            onSegmentClick={setSelectedLocation}
+            selectedLocation={selectedLocation}
+          />
           <InsightsPanel insights={insights} anomalies={anomalies} />
-        <StoreShareChart
-          data={locationData}
-          onSegmentClick={setSelectedLocation}
-          selectedLocation={selectedLocation}
-        />
+        
       </div>
     </div>
   );
