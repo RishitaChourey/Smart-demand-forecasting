@@ -94,65 +94,65 @@ function PIL2() {
 
   // --- REPLACE runBaseline WITH THIS ---
   const runBaseline = async () => {
-    const stores = getStoreIds();
-    const product = productId === "all" ? null : parseInt(productId);
-    const expectedRows = stores.length * (product ? 1 : 10) * 7;
+  const stores = getStoreIds();
+  // Baseline always runs all 10 products regardless of productId dropdown
+  const expectedRows = stores.length * 10 * 7;
 
-    setBaselineStatus({ type: "load", msg: `Running baseline — expecting ${expectedRows} rows...` });
-    try {
-      let lastRunId = null;
-      for (const sid of stores) {
-        const res = await fetch("http://localhost:8000/api/predict/predict_baseline", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ store_id: sid, product_id: product }),
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          setBaselineStatus({ type: "err", msg: `Error on store ${sid}: ${err.detail || res.statusText}` });
-          return;
-        }
-        const json = await res.json();
-        lastRunId = json.run_id;
+  setBaselineStatus({ type: "load", msg: `Running baseline — expecting ${expectedRows} rows across ${stores.length} store(s)...` });
+  try {
+    let lastRunId = null;
+    for (const sid of stores) {
+      const res = await fetch("http://localhost:8000/api/predict/predict_baseline", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ store_id: sid }),
+        // product_id intentionally not sent — backend always runs all products
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        setBaselineStatus({ type: "err", msg: `Error on store ${sid}: ${err.detail || res.statusText}` });
+        return;
       }
-      setLastBaselineRunId(lastRunId);
-      setBaselineStatus({ type: "ok", msg: `Done — ${expectedRows} rows stored. Run ID: ${lastRunId}` });
-    } catch (e) {
-      setBaselineStatus({ type: "err", msg: `Network error: ${e.message}` });
+      const json = await res.json();
+      lastRunId = json.run_id;
     }
-  };
+    setLastBaselineRunId(lastRunId);
+    setBaselineStatus({ type: "ok", msg: `Done — ${expectedRows} rows stored. Run ID: ${lastRunId}` });
+  } catch (e) {
+    setBaselineStatus({ type: "err", msg: `Network error: ${e.message}` });
+  }
+};
 
-  // --- REPLACE runSimulation WITH THIS ---
-  const runSimulation = async () => {
-    const stores = getStoreIds();
-    const product = productId === "all" ? null : parseInt(productId);
-    const overrides = buildOverrides();
-    const expectedRows = stores.length * (product ? 1 : 10) * 7;
+const runSimulation = async () => {
+  const stores = getStoreIds();
+  const product = productId === "all" ? null : parseInt(productId);
+  const overrides = buildOverrides();
+  // Simulation respects product filter
+  const expectedRows = stores.length * (product ? 1 : 10) * 7;
 
-    setSimStatus({ type: "load", msg: `Running simulation — expecting ${expectedRows} rows...` });
-    try {
-      let lastRunId = null;
-      for (const sid of stores) {
-        const res = await fetch("http://localhost:8000/api/predict/predict_simulation", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ store_id: sid, product_id: product, overrides }),
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          setSimStatus({ type: "err", msg: `Error on store ${sid}: ${err.detail || res.statusText}` });
-          return;
-        }
-        const json = await res.json();
-        lastRunId = json.run_id;
+  setSimStatus({ type: "load", msg: `Running simulation — expecting ${expectedRows} rows across ${stores.length} store(s)...` });
+  try {
+    let lastRunId = null;
+    for (const sid of stores) {
+      const res = await fetch("http://localhost:8000/api/predict/predict_simulation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ store_id: sid, product_id: product, overrides }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        setSimStatus({ type: "err", msg: `Error on store ${sid}: ${err.detail || res.statusText}` });
+        return;
       }
-      setLastSimRunId(lastRunId);
-      setSimStatus({ type: "ok", msg: `Done — ${expectedRows} rows stored. Run ID: ${lastRunId}` });
-    } catch (e) {
-      setSimStatus({ type: "err", msg: `Network error: ${e.message}` });
+      const json = await res.json();
+      lastRunId = json.run_id;
     }
-  };
-
+    setLastSimRunId(lastRunId);
+    setSimStatus({ type: "ok", msg: `Done — ${expectedRows} rows stored. Run ID: ${lastRunId}` });
+  } catch (e) {
+    setSimStatus({ type: "err", msg: `Network error: ${e.message}` });
+  }
+};
   const badgeStyle = (type) => ({
     display: "inline-flex",
     alignItems: "center",
