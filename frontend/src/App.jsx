@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Topbar from "./components/Topbar";
 import Dashboard from "./components/Dashboard";
+import PIL2 from "./pages/PIL2";
 import PILPage from "./pages/PILPage";
 
 function App() {
@@ -21,6 +22,9 @@ function App() {
             />
           )}
 
+          {activePage === "pil2" && (
+           <PIL2 />
+          )}
           {activePage === "pil" && (
             <PILPage
               selectedStores={selectedStores}
