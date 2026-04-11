@@ -3,6 +3,7 @@ import numpy as np
 import xgboost as xgb
 from datetime import timedelta, datetime
 from app.db import get_connection
+import shap
 
 
 def preprocess_features(df):
