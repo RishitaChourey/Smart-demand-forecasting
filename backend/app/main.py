@@ -5,6 +5,8 @@ from app.routes import category_sales
 from app.routes import store_sales
 from app.routes import product_store_sales
 from app.routes import inventory_simulation
+from app.routes import inventory_comparison
+from app.routes import inventory_stockout
 
 app = FastAPI()
 
@@ -22,3 +24,5 @@ app.include_router(category_sales.router, prefix="/api")
 app.include_router(store_sales.router, prefix="/api") 
 app.include_router(product_store_sales.router, prefix="/api")  
 app.include_router(inventory_simulation.router, prefix="/api")
+app.include_router(inventory_comparison.router, prefix="/api")
+app.include_router(inventory_stockout.router, prefix="/api")
