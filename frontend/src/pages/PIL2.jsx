@@ -6,7 +6,7 @@ function PIL2() {
   const [baselineStatus, setBaselineStatus] = useState(null);
   const [simStatus, setSimStatus] = useState(null);
   const [activeTab, setActiveTab] = useState("weather");
-
+const [explanation, setExplanation] = useState("");
   // Weather state
   const [weatherCondition, setWeatherCondition] = useState("");
   const [avgTemp, setAvgTemp] = useState("");
@@ -115,6 +115,7 @@ function PIL2() {
       }
       const json = await res.json();
       lastRunId = json.run_id;
+      setExplanation(json.explanation);
     }
     setLastBaselineRunId(lastRunId);
     setBaselineStatus({ type: "ok", msg: `Done — ${expectedRows} rows stored. Run ID: ${lastRunId}` });
@@ -146,6 +147,7 @@ const runSimulation = async () => {
       }
       const json = await res.json();
       lastRunId = json.run_id;
+      setExplanation(json.explanation);
     }
     setLastSimRunId(lastRunId);
     setSimStatus({ type: "ok", msg: `Done — ${expectedRows} rows stored. Run ID: ${lastRunId}` });
@@ -360,6 +362,19 @@ const runSimulation = async () => {
           Run simulation prediction
         </button>
         {simStatus && <div style={statusStyle(simStatus.type)}>{simStatus.msg}</div>}
+
+        {explanation && (
+  <div style={{
+    marginTop: "1rem",
+    padding: "12px",
+    borderRadius: "8px",
+    background: "var(--color-background-secondary)",
+    fontSize: "13px"
+  }}>
+    <strong>AI Explanation:</strong>
+    <div>{explanation}</div>
+  </div>
+)}
       </div>
     </div>
   );

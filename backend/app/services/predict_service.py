@@ -3,7 +3,7 @@ import numpy as np
 import xgboost as xgb
 from datetime import timedelta, datetime
 from app.db import get_connection
-
+import shap
 
 def preprocess_features(df):
     df["year"] = df["date"].dt.year
@@ -301,7 +301,7 @@ def run_prediction(conn, model, store_id, product_id=None,
     conn.commit()
     print(f"[DONE] {len(results)} {run_type} predictions stored — run_id={run_id}")
 
-    import shap
+  
 
 def compute_shap(conn, model, store_id, product_id, run_type="baseline"):
     cur = conn.cursor()
@@ -399,90 +399,75 @@ def compute_shap(conn, model, store_id, product_id, run_type="baseline"):
         "base_value": round(float(explainer.expected_value), 4),
         "days": result
     }
+from app.services.llm_service import generate_llm_explanation
+
 def generate_explanation(conn, model, store_id, product_id, run_type="baseline"):
-    # Get SHAP data for this run
     shap_data = compute_shap(conn, model, store_id, product_id, run_type)
 
-    # Aggregate SHAP values across all forecast days — mean absolute impact per feature
     feature_cols = list(shap_data["days"][0]["shap_values"].keys())
+
+    # Mean SHAP
     mean_shap = {
         col: round(float(np.mean([d["shap_values"][col] for d in shap_data["days"]])), 4)
         for col in feature_cols
     }
 
-    # Sort by absolute impact
     sorted_features = sorted(mean_shap.items(), key=lambda x: abs(x[1]), reverse=True)
     top_features = sorted_features[:5]
 
-    # Human readable feature labels
-    labels = {
-        "lag_1": "yesterday's sales",
-        "lag_7": "sales from 7 days ago",
-        "lag_364": "sales from last year (same period)",
-        "rolling_mean_7": "7-day average sales trend",
-        "rolling_std_7": "sales volatility over the last 7 days",
-        "sell_price": "current sell price",
-        "inventory_on_hand": "current inventory level",
-        "promo_intensity": "promotion strength",
-        "impact_level": "event impact level",
-        "is_weekend": "weekend effect",
-        "month": "seasonal month pattern",
-        "day_of_week": "day of week pattern",
-        "store_id": "store characteristics",
-        "product_id": "product characteristics",
-        "year": "yearly trend",
-    }
-
-    # Build driver sentences
-    drivers = []
-    for feat, val in top_features:
-        direction = "increasing" if val > 0 else "decreasing"
-        label = labels.get(feat, feat)
-        drivers.append(f"{label} is {direction} the forecast (impact: {val:+.3f})")
-
-    # Fetch avg predicted units for summary
+    # Fetch stats
     cur = conn.cursor()
     cur.execute("""
         SELECT AVG(predicted_units_sold), MIN(predicted_units_sold), MAX(predicted_units_sold)
         FROM demand_forecast
         WHERE store_id = %s AND product_id = %s AND run_type = %s
     """, (store_id, product_id, run_type))
+
     avg_units, min_units, max_units = cur.fetchone()
 
-    summary = (
-        f"For store {store_id}, product {product_id}, the {run_type} forecast predicts "
-        f"an average of {avg_units:.1f} units/day "
-        f"(ranging {min_units:.1f}–{max_units:.1f} over the forecast period)."
-    )
-
-    explanation = {
+    # ✅ Build structured payload
+    explanation_payload = {
         "store_id": store_id,
         "product_id": product_id,
         "run_type": run_type,
-        "summary": summary,
-        "top_drivers": drivers,
-        "mean_shap_by_feature": dict(sorted_features),
+        "forecast_summary": {
+            "average_units": round(avg_units, 2),
+            "min_units": round(min_units, 2),
+            "max_units": round(max_units, 2)
+        },
+        "top_drivers": [
+            {"feature": f, "impact": float(v)}
+            for f, v in top_features
+        ]
     }
 
-    # If simulation, also compare against baseline
+    # ✅ Add baseline comparison if simulation
     if run_type == "simulation":
         cur.execute("""
             SELECT AVG(predicted_units_sold)
             FROM demand_forecast
             WHERE store_id = %s AND product_id = %s AND run_type = 'baseline'
         """, (store_id, product_id))
+
         row = cur.fetchone()
         if row and row[0]:
-            baseline_avg = row[0]
-            delta = avg_units - baseline_avg
-            delta_pct = (delta / baseline_avg) * 100
-            direction = "higher" if delta > 0 else "lower"
-            explanation["vs_baseline"] = (
-                f"Compared to baseline, the simulation forecasts {abs(delta):.1f} units {direction} per day "
-                f"({abs(delta_pct):.1f}% {direction}). "
-                f"The biggest simulation-driven change came from: {top_features[0][0].replace('_', ' ')}."
-            )
-        else:
-            explanation["vs_baseline"] = "No baseline data found to compare against. Run baseline first."
+            baseline_avg = float(row[0])
+            simulation_avg = float(avg_units)
 
-    return explanation
+            explanation_payload["comparison"] = {
+                "baseline_avg": round(baseline_avg, 2),
+                "simulation_avg": round(simulation_avg, 2),
+                "delta": round(simulation_avg - baseline_avg, 2),
+                "delta_percent": round(((simulation_avg - baseline_avg) / baseline_avg) * 100, 2)
+            }
+
+    # 🔥 LLM CALL
+    llm_text = generate_llm_explanation(explanation_payload)
+
+    return {
+        "store_id": store_id,
+        "product_id": product_id,
+        "run_type": run_type,
+        "llm_explanation": llm_text,
+        "structured_data": explanation_payload   # optional (debug/UI)
+    }
